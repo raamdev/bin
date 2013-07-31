@@ -41,8 +41,8 @@ function reset_files {
 	echo ""
 }
 
-function update_clean_state {
-	read -p "Delete the old $GIT_CLEAN_TAG tag and recreate it with the current state? (WARNING: old clean state will be lost!)" -n 1 -r
+function tag_project {
+	read -p "Tag the current project state with $GIT_CLEAN_TAG? (WARNING: old clean state will be lost!)" -n 1 -r
 	if [[ $REPLY =~ ^[Yy]$ ]]
 	then
 		cd $PROJECT_PATH
@@ -55,6 +55,32 @@ function update_clean_state {
 	echo ""
 }
 
+function export_mysql {
+	read -p "Create new database snapshot? (WARNING: $DATABASE_BACKUP_FILENAME will be overwritten!) " -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		cd $PROJECT_PATH
+		
+		git diff-index --quiet --cached HEAD
+		if [ $? -ne 0 ]; then
+			echo "Error: There are files staged for commit. You must commit or unstage them before proceeding."
+			exit 1
+		fi
+		
+		echo ""
+		if [ -f $DATABASE_BACKUP_FILENAME ]; then
+			rm -f $DATABASE_BACKUP_FILENAME
+		fi
+		echo "Exporting $DATABASE_NAME to $DATABASE_BACKUP_FILENAME..."
+		$PATH_TO_MYSQLDUMP_BIN -v -u $DATABASE_USERNAME -h $DATABASE_HOST --password=$DATABASE_PASSWORD $DATABASE_NAME > $DATABASE_BACKUP_FILENAME
+		echo ""
+		echo "Committing $DATABASE_BACKUP_FILENAME to Git..."
+		git add $DATABASE_BACKUP_FILENAME
+		git commit -m "Updating $DATABASE_BACKUP_FILENAME snapshot"
+	fi
+	echo ""
+}
+
 function create_config_file {
 	
 	if [ -f .reset_clean_config ]; then
@@ -62,7 +88,6 @@ function create_config_file {
 		echo "Error: .reset_clean_config already exists"
 		exit 1
 	fi
-	cd $PROJECT_PATH
 	echo ""
 	cat > .reset_clean_config <<EOF
 # Change these settings to reflect your project and environment
@@ -73,6 +98,7 @@ DATABASE_HOST="localhost"
 DATABASE_NAME="database"
 DATABASE_BACKUP_FILENAME="database.sql" # relative to $PROJECT_PATH
 PATH_TO_MYSQL_BIN="/Applications/MAMP/Library/bin/mysql"
+PATH_TO_MYSQLDUMP_BIN="/Applications/MAMP/Library/bin/mysqldump"
 GIT_CLEAN_TAG="clean" # only change this if you want to use a different tag name
 EOF
 	echo ""
@@ -187,7 +213,8 @@ case "$REPLY" in
 		;;
 	4)
 		echo ""
-		update_clean_state
+		export_mysql
+		tag_project
 		exit 0
 		;;
 	5)
