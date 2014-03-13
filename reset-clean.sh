@@ -41,6 +41,20 @@ function reset_files {
 	echo ""
 }
 
+function clean_untracked_files {
+	git status
+	echo ""
+	read -p "Delete all untracked local files and directories? (WARNING: local data will be deleted!)? " -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		cd $PROJECT_PATH
+		echo ""
+		echo "Running git clean -f -f -d"
+		git clean -f -f -d
+	fi
+	echo ""
+}
+
 function tag_project {
 	read -p "Tag the current project state with $GIT_CLEAN_TAG? (WARNING: old clean state will be lost!)" -n 1 -r
 	if [[ $REPLY =~ ^[Yy]$ ]]
@@ -199,6 +213,7 @@ case "$REPLY" in
 		echo ""
 		reset_database
 		reset_files
+		clean_untracked_files
 		exit 0
 		;;
 	2)
