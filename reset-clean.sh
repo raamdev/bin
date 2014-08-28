@@ -8,6 +8,14 @@
 # 	It resets a MySQL database and a project directory (Git repo) and
 # 	can also be used to update the clean state of the project.
 #
+#	A 'clean state' is defined by a specific point in the git history,
+#	tagged with GIT_CLEAN_TAG (see config file). When you update the
+#	clean state with this script, a MySQL dump is completed and stored
+#	in the git repo. When you reset the database and files to the
+#	clean state, this script does a "git reset --hard" to the clean
+#	state tag, and then restores the MySQL dump that was previously
+# 	saved.
+#
 #	Requires .reset_clean_config configuration file in project root.
 #	If no configuration is found, you can create one with this script.
 #
