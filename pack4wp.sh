@@ -32,40 +32,11 @@ if [ -f $2 ]; then
 	exit 1
 fi
 
-if [ -d $1/.git ]; then
-	read -p "Found a .git directory in $1. Do you want to delete it? " -n 1 -r
-	if [[ $REPLY =~ ^[Yy]$ ]]
-	then
-		rm -rf $1/.git
-	fi
-	echo ""
-fi
+echo ""
+echo "Excluding .git*, README.md*, .DS_Store*, apigen.neon*, *.sketch, and .idea* from zip file..."
+echo ""
 
-if [ -f $1/.gitignore ]; then
-	read -p "Found .gitignore in $1. Do you want to delete it? " -n 1 -r
-	if [[ $REPLY =~ ^[Yy]$ ]]
-	then
-		rm -rf $1/.gitignore
-	fi
-	echo ""
-fi
-
-if [ -f $1/README.md ]; then
-	read -p "Found README.md in $1. Do you want to delete it? " -n 1 -r
-	if [[ $REPLY =~ ^[Yy]$ ]]
-	then
-		rm -rf $1/README.md
-	fi
-	echo ""
-fi
-
-if [ -f $1/.DS_Store ]; then
-	echo "Found .DS_Store in target directory; removing... "
-	echo ""
-	rm -f $1/.DS_Store
-fi
-
-zip -r $2 $1/*
+zip -r --exclude=*.git* --exclude=*README.md* --exclude=*.DS_Store* --exclude=*apigen.neon* --exclude=*.sketch* --exclude=*.idea* $2 $1
 
 echo ""
 echo "All done. Here's the contents of $2:"
