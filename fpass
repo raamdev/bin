@@ -1,0 +1,46 @@
+#!/bin/bash
+
+PATH_TO_PASS=/usr/local/bin/pass
+PATH_TO_PASS_DIR=/Users/raam/.password-store
+PATH_TO_FIND=/usr/bin/find
+
+# Trims ".password-store/Personal/example.com.gpg" to 
+# "Personal/example.com" for use with the pass command
+#SEARCHTERM=$($PATH_TO_FIND $PATH_TO_PASS_DIR -type f -iname "*$1*")
+
+OFFSET=${#PATH_TO_PASS_DIR}
+SEARCH_PATTERN=$(echo $1 | sed 's/ /.*/g')
+SEARCH_PATTERN=".*$SEARCH_PATTERN.*"
+
+# If more than one result was returned by the search,
+# we need to present a list of results instead of using
+# pass to get the password. If we can, we use the pass
+# program to display the results so they look pretty.
+NUMBER_OF_RESULTS=$(find $PATH_TO_PASS_DIR -iregex "$SEARCH_PATTERN" | wc -l)
+if [ $NUMBER_OF_RESULTS -gt 1 ]; then
+	SEARCHTERM=$(find $PATH_TO_PASS_DIR -type d -iregex "$SEARCH_PATTERN")
+	
+	# If the search did not return a directory, then we can't
+	# use the pass program to display teh results and we'll
+	# need to simply output the result of the find command.
+	if [ -z "$SEARCHTERM" ] || [ "$SEARCHTERM" == "" ]; then
+		find $PATH_TO_PASS_DIR -iregex "$SEARCH_PATTERN"
+		exit
+	fi
+	
+	# Show the results using the pass program.
+	PREFIX_TRIMMED=${SEARCHTERM:OFFSET:999}
+	PREFIX_AND_EXTENSION_TRIMMED="${PREFIX_TRIMMED%.*}"
+	echo $PREFIX_AND_EXTENSION_TRIMMED
+	$PATH_TO_PASS show $PREFIX_AND_EXTENSION_TRIMMED
+	exit
+fi
+
+# If we got this far, then we found 1 and only 1 result.
+# Let's display the password using the pass program.
+SEARCHTERM=$(find $PATH_TO_PASS_DIR -iregex "$SEARCH_PATTERN")
+PREFIX_TRIMMED=${SEARCHTERM:OFFSET:999}
+PREFIX_AND_EXTENSION_TRIMMED="${PREFIX_TRIMMED%.*}"
+echo $PREFIX_AND_EXTENSION_TRIMMED
+$PATH_TO_PASS show $PREFIX_AND_EXTENSION_TRIMMED
+$PATH_TO_PASS show -c $PREFIX_AND_EXTENSION_TRIMMED
